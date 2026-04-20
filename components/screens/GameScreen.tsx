@@ -5,9 +5,10 @@ import { useGameStore } from '@/lib/store'
 import { FACTIONS } from '@/game/data/factions'
 import { getMapForMatchup } from '@/game/data/maps'
 import { GameCanvas } from '@/game/render/GameCanvas'
+import { EconomyHUD } from '@/components/game/EconomyHUD'
 
 export function GameScreen() {
-  const { phase, player1, player2, matchClock, isPaused, setPhase, togglePause } = useGameStore()
+  const { phase, player1, player2, matchClock, isPaused, setPhase, togglePause, tick } = useGameStore()
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const p1Faction = player1.faction ? FACTIONS[player1.faction] : null
@@ -25,22 +26,13 @@ export function GameScreen() {
   useEffect(() => {
     if ((phase === 'peacetime' || phase === 'combat') && !isPaused) {
       clockRef.current = setInterval(() => {
-        useGameStore.setState((s) => {
-          const newClock = s.matchClock + 1
-          if (s.phase === 'peacetime' && newClock >= 210) {
-            return { matchClock: newClock, phase: 'combat' }
-          }
-          if (newClock >= 1200) {
-            return { matchClock: newClock, phase: 'post-match' }
-          }
-          return { matchClock: newClock }
-        })
+        tick()
       }, 1000)
       return () => {
         if (clockRef.current) clearInterval(clockRef.current)
       }
     }
-  }, [phase, isPaused])
+  }, [phase, isPaused, tick])
 
   // Keyboard: pause with Escape
   useEffect(() => {
@@ -106,49 +98,8 @@ export function GameScreen() {
       {/* Main game area */}
       <div className="flex-1 flex min-h-0">
         {/* P1 HUD */}
-        <div className="w-52 border-r border-border bg-panel/30 p-3 flex flex-col gap-1.5 shrink-0">
-          <div className="font-mono text-[10px] tracking-wider mb-1 flex items-center gap-2"
-               style={{ color: p1Faction?.accentColor }}>
-            <span className="uppercase">Supply Chain</span>
-          </div>
-          {[
-            { key: 'raw', label: 'Raw Inputs', icon: '⬡' },
-            { key: 'component', label: 'Components', icon: '◈' },
-            { key: 'assembly', label: 'Assembly', icon: '▣' },
-            { key: 'energy', label: 'Energy Grid', icon: '⚡' },
-            { key: 'human', label: 'Human Capital', icon: '◉' },
-          ].map((node) => (
-            <div key={node.key} className="border border-border/50 p-2 bg-surface/30">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] text-gray-400 flex items-center gap-1.5">
-                  <span className="text-xs">{node.icon}</span>
-                  {node.label}
-                </span>
-                <span className="font-mono text-[10px] text-gray-600">100%</span>
-              </div>
-              <div className="h-1 bg-border mt-1.5 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: '100%', backgroundColor: p1Faction?.accentColor, opacity: 0.5 }}
-                />
-              </div>
-            </div>
-          ))}
-
-          <div className="mt-auto border-t border-border/50 pt-2 space-y-1">
-            <div className="flex justify-between font-mono text-[10px]">
-              <span className="text-gray-500">Stockpile</span>
-              <span className="text-gray-300 tabular-nums">0</span>
-            </div>
-            <div className="flex justify-between font-mono text-[10px]">
-              <span className="text-gray-500">Regen Rate</span>
-              <span className="text-gray-300 tabular-nums">0/min</span>
-            </div>
-            <div className="flex justify-between font-mono text-[10px]">
-              <span className="text-gray-500">Units Active</span>
-              <span className="text-gray-300 tabular-nums">0</span>
-            </div>
-          </div>
+        <div className="w-52 border-r border-border bg-panel/30 p-3 shrink-0 overflow-y-auto">
+          <EconomyHUD player={1} accentColor={p1Faction?.accentColor || '#3498db'} />
         </div>
 
         {/* Map canvas area */}
@@ -209,49 +160,8 @@ export function GameScreen() {
         </div>
 
         {/* P2 HUD */}
-        <div className="w-52 border-l border-border bg-panel/30 p-3 flex flex-col gap-1.5 shrink-0">
-          <div className="font-mono text-[10px] tracking-wider mb-1 flex items-center gap-2"
-               style={{ color: p2Faction?.accentColor }}>
-            <span className="uppercase">Supply Chain</span>
-          </div>
-          {[
-            { key: 'raw', label: 'Raw Inputs', icon: '⬡' },
-            { key: 'component', label: 'Components', icon: '◈' },
-            { key: 'assembly', label: 'Assembly', icon: '▣' },
-            { key: 'energy', label: 'Energy Grid', icon: '⚡' },
-            { key: 'human', label: 'Human Capital', icon: '◉' },
-          ].map((node) => (
-            <div key={node.key} className="border border-border/50 p-2 bg-surface/30">
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-[10px] text-gray-400 flex items-center gap-1.5">
-                  <span className="text-xs">{node.icon}</span>
-                  {node.label}
-                </span>
-                <span className="font-mono text-[10px] text-gray-600">100%</span>
-              </div>
-              <div className="h-1 bg-border mt-1.5 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{ width: '100%', backgroundColor: p2Faction?.accentColor, opacity: 0.5 }}
-                />
-              </div>
-            </div>
-          ))}
-
-          <div className="mt-auto border-t border-border/50 pt-2 space-y-1">
-            <div className="flex justify-between font-mono text-[10px]">
-              <span className="text-gray-500">Stockpile</span>
-              <span className="text-gray-300 tabular-nums">0</span>
-            </div>
-            <div className="flex justify-between font-mono text-[10px]">
-              <span className="text-gray-500">Regen Rate</span>
-              <span className="text-gray-300 tabular-nums">0/min</span>
-            </div>
-            <div className="flex justify-between font-mono text-[10px]">
-              <span className="text-gray-500">Units Active</span>
-              <span className="text-gray-300 tabular-nums">0</span>
-            </div>
-          </div>
+        <div className="w-52 border-l border-border bg-panel/30 p-3 shrink-0 overflow-y-auto">
+          <EconomyHUD player={2} accentColor={p2Faction?.accentColor || '#e74c3c'} />
         </div>
       </div>
 
