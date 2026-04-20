@@ -1,26 +1,24 @@
 'use client'
 
 import { useGameStore } from '@/lib/store'
-import { TitleScreen } from '@/components/screens/TitleScreen'
-import { FactionSelect } from '@/components/screens/FactionSelect'
-import { GameScreen } from '@/components/screens/GameScreen'
-import { PostMatch } from '@/components/screens/PostMatch'
+import { DisplayLobby } from '@/components/display/DisplayLobby'
+import { DisplayGame } from '@/components/display/DisplayGame'
+import { DisplayPostMatch } from '@/components/display/DisplayPostMatch'
 
 export default function Home() {
   const phase = useGameStore((s) => s.phase)
 
   switch (phase) {
-    case 'title':
-      return <TitleScreen />
+    case 'lobby':
     case 'faction-select':
-      return <FactionSelect />
+      return <DisplayLobby />
     case 'briefing':
     case 'peacetime':
     case 'combat':
-      return <GameScreen />
+      return <DisplayGame />
     case 'post-match':
-      return <PostMatch />
+      return <DisplayPostMatch />
     default:
-      return <TitleScreen />
+      return <DisplayLobby />
   }
 }
