@@ -2,6 +2,7 @@
 
 import { useGameStore, FactionId } from '@/lib/store'
 import { FACTIONS } from '@/game/data/factions'
+import { getMapForMatchup } from '@/game/data/maps'
 
 const factionIds: FactionId[] = ['usa', 'china', 'russia', 'ukraine', 'iran', 'taiwan']
 
@@ -9,6 +10,9 @@ export function FactionSelect() {
   const { player1, player2, selectFaction, startMatch, setPhase } = useGameStore()
 
   const canStart = player1.faction && player2.faction && player1.faction !== player2.faction
+  const selectedMap = player1.faction && player2.faction
+    ? getMapForMatchup(player1.faction, player2.faction)
+    : null
 
   return (
     <div className="h-screen w-screen bg-surface flex flex-col">
@@ -105,7 +109,7 @@ export function FactionSelect() {
 
       {/* Faction detail + start */}
       <div className="border-t border-border px-8 py-6 flex items-center justify-between">
-        <div className="flex gap-12">
+        <div className="flex gap-12 items-start">
           {player1.faction && (
             <div>
               <span className="text-xs text-gray-500 font-mono">P1: </span>
@@ -126,6 +130,13 @@ export function FactionSelect() {
               <p className="text-xs text-gray-600 mt-1">
                 + {FACTIONS[player2.faction].strength}
               </p>
+            </div>
+          )}
+          {selectedMap && (
+            <div>
+              <span className="text-xs text-gray-500 font-mono">Map: </span>
+              <span className="text-sm font-mono text-white">{selectedMap.name}</span>
+              <p className="text-xs text-gray-600 mt-1">{selectedMap.description}</p>
             </div>
           )}
         </div>
